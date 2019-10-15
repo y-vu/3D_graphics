@@ -1,0 +1,97 @@
+<html>
+    
+    <head>
+    <title>My first Three.js app</title>
+    <style>canvas { width: 100%; height: 100% }</style>
+    </head>
+
+    <body>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/stats.min.js"></script>
+    <script>
+
+        var scene, camera, renderer, cube;
+		function Start() {
+            //CREO SCENA, CAMERA, RENDERER
+            scene = new THREE.Scene(); //"contenitore"
+            camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 ); //macchina fotografica prospettica
+            renderer = new THREE.WebGLRenderer(); //oggetto che controlla il rendering
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            document.body.appendChild( renderer.domElement ); //appendo al body un elemento canvas (renderer ci fa rendering dentro)
+
+            //AGGIUNGO OGGETTI ALLA SCENA
+            //cubo
+            var geometry = new THREE.Geometry();
+			geometry.vertices.push(
+                new THREE.Vector3(1, 1, 0),
+                new THREE.Vector3(2, 1, 0),
+                new THREE.Vector3(2, 2, 0),
+                new THREE.Vector3(1, 2, 0),
+
+                new THREE.Vector3(1, 1, 1),
+                new THREE.Vector3(2, 1, 1),
+                new THREE.Vector3(2, 2, 1),
+                new THREE.Vector3(1, 2, 1)
+            );
+            geometry.faces.push(
+                new THREE.Face3(0, 3, 1),
+                new THREE.Face3(3, 2, 1),
+
+                new THREE.Face3(4, 0, 1),
+                new THREE.Face3(4, 1, 5),
+
+                new THREE.Face3(5, 1, 2),
+                new THREE.Face3(5, 2, 6),
+
+                new THREE.Face3(6, 2, 3),
+                new THREE.Face3(3, 7, 6),
+
+                new THREE.Face3(3, 0, 7),
+                new THREE.Face3(0, 4, 7),
+
+                new THREE.Face3(4, 5, 6),
+                new THREE.Face3(6, 7, 4)
+            ); 
+
+            //colore facce
+            colors=["yellow", "red", "blue", "green", "white", "pink"];
+            var j=0
+            for(i=0; i<geometry.faces.length; i+=2){
+                geometry.faces[i].color = new THREE.Color(colors[j]);
+                geometry.faces[i+1].color = new THREE.Color(colors[j]);
+                j++;
+            }
+            var material = new THREE.MeshBasicMaterial({
+				vertexColors: THREE.FaceColors,
+				side: THREE.FrontSide //disegna la faccia front
+                //c'è anche BackSide e DoubleSide (le disegna tutte e due)
+			});
+
+            cube = new THREE.Mesh( geometry, material );
+            scene.add(cube);
+        
+
+            camera.position.z = 8; 
+
+            stats = new Stats();
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.top = '0px';
+            document.body.appendChild( stats.domElement );
+        }
+
+        //CREO UN RENDER LOOP
+        function Update() {
+            requestAnimationFrame(Update); //decide la velocità di chiamata del browser (per un nuovo render)
+            stats.update(); 
+            cube.rotation.z += 0.02;
+            cube.rotation.y += 0.02;
+            renderer.render(scene, camera);
+        }
+        
+        Start();
+        Update();
+
+    </script>
+    </body>
+
+</html>

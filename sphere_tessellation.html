@@ -1,0 +1,164 @@
+<html>
+    
+    <head>
+    <title>My first Three.js app</title>
+    <style>canvas { width: 100%; height: 100% }</style>
+    </head>
+
+    <body>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/stats.min.js"></script>
+    <script>
+
+        var scene, camera, renderer, wireframe;
+        var geometry, edges, material;
+		function Start() {
+            //CREO SCENA, CAMERA, RENDERER
+            scene = new THREE.Scene(); //"contenitore"
+            scene.background = new THREE.Color( "white" );
+            camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 ); //macchina fotografica prospettica
+            renderer = new THREE.WebGLRenderer(); //oggetto che controlla il rendering
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            document.body.appendChild( renderer.domElement ); //appendo al body un elemento canvas (renderer ci fa rendering dentro)
+
+            //AGGIUNGO OGGETTI ALLA SCENA
+            //ottaedro
+            geometry = new THREE.Geometry();
+			geometry.vertices.push(
+                new THREE.Vector3(0, -1, 0), //sotto
+                new THREE.Vector3(0, 1, 0), //sopra
+
+                new THREE.Vector3(1, 0, 1), //dx davanti
+                new THREE.Vector3(1, 0, -1), //dx dietro
+                new THREE.Vector3(-1, 0, -1), //sx dietro
+                new THREE.Vector3(-1, 0, 1) //sx davanti
+            );
+            geometry.faces.push( //si parte da 0!!
+                new THREE.Face3(0, 2, 5), //in basso davanti
+                new THREE.Face3(0, 3, 2), //in basso a dx
+                new THREE.Face3(0, 4, 3), //in basso dietro
+                new THREE.Face3(0, 5, 4), //in basso a sx
+
+                new THREE.Face3(5, 2, 1), //in alto davanti
+                new THREE.Face3(2, 3, 1), //in alto a dx
+                new THREE.Face3(3, 4, 1), //in alto dietro
+                new THREE.Face3(5, 1, 4) //in alto a sx
+            ); 
+
+            edges = new THREE.EdgesGeometry( geometry );
+            material = new THREE.LineBasicMaterial( { color: getRandomColor() } );
+            wireframe = new THREE.LineSegments( edges, material );
+            
+
+            scene.add( wireframe );
+            
+
+            camera.position.z = 6; 
+
+            stats = new Stats();
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.top = '0px';
+            document.body.appendChild( stats.domElement );
+        }
+
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+            }
+
+        function addFaces(){
+            //TROVO PUNTI MEDI SPIGOLI
+            //per ogni faccia trovo il punto medio di oguno dei tre spigoli
+
+            var facesNum = geometry.faces.length; //a ogni esecuzione di addFaces() è un numero diverso;
+            console.log("number of faces: "+facesNum);
+            if(facesNum>100000) return;
+            
+            //prendo in esame ogni faccia
+            var firstVertexIndex, secondVertexIndex;
+            for(var i=0; i<facesNum; i++){
+                //di ogni faccia prendo in esame ogni spigolo
+                for(var j=0; j<3; j++){
+                    if(j == 0){
+                        firstVertexIndex = geometry.faces[i].a; //vertice 1 della i-esima faccia
+                        secondVertexIndex = geometry.faces[i].b; //vertice 2 della i-esima faccia
+                    }else if(j == 1){
+                        firstVertexIndex = geometry.faces[i].b;
+                        secondVertexIndex = geometry.faces[i].c;
+                    }else{
+                        firstVertexIndex = geometry.faces[i].c;
+                        secondVertexIndex = geometry.faces[i].a;
+                    }
+                    var midpoint = new THREE.Vector3(
+                        (geometry.vertices[firstVertexIndex].x + geometry.vertices[secondVertexIndex].x)/2,
+                        (geometry.vertices[firstVertexIndex].y + geometry.vertices[secondVertexIndex].y)/2,
+                        (geometry.vertices[firstVertexIndex].z + geometry.vertices[secondVertexIndex].z)/2
+                    );    
+                    //aggiungo il nuovo vertice trovato a geometry
+                    geometry.vertices.push(midpoint);
+
+                }
+                //ora gli ultimi tre vertici di geometry.vertices sono i tre nuovi punti medi appena trovati
+                //ovvero sono i vertici di una delle nuove facce
+                //aggiungo la nuova faccia a geometry
+                geometry.faces.push(new THREE.Face3(
+                                        geometry.vertices.length-3,
+                                        geometry.vertices.length-2,
+                                        geometry.vertices.length-1
+                                        )
+                );
+                //aggiungo anche le altre tre facce 
+                geometry.faces.push(new THREE.Face3(
+                                        geometry.faces[i].a,
+                                        geometry.vertices.length-1,
+                                        geometry.vertices.length-3
+                                    ),
+                                    new THREE.Face3(
+                                        geometry.vertices.length-3,
+                                        geometry.vertices.length-2,
+                                        geometry.faces[i].b
+                                    ),
+                                    new THREE.Face3(
+                                        geometry.vertices.length-2,
+                                        geometry.vertices.length-1,
+                                        geometry.faces[i].c
+                                    )
+                );
+            }
+            //normalizzo i vertici della nuova geometria
+            for(var i = 0; i < geometry.vertices.length; i++){
+                geometry.vertices[i].normalize();
+            }
+
+            //elimino il wireframe del render precedente e ne creo uno nuovo
+            scene.remove(wireframe);
+            edges = new THREE.EdgesGeometry( geometry );
+            material = new THREE.LineBasicMaterial( { color: getRandomColor() } );
+            wireframe = new THREE.LineSegments( edges, material );
+            scene.add( wireframe );
+        }
+
+        //CREO UN RENDER LOOP
+        var time = 0;
+        function Update() {
+            requestAnimationFrame(Update); //decide la velocità di chiamata del browser (per un nuovo render)
+            stats.update(); 
+            wireframe.rotation.y += 0.01;
+            
+            time++;
+            if(time%60 == 0) addFaces();
+
+            renderer.render(scene, camera);
+        }
+        
+        Start();
+        Update();
+
+    </script>
+    </body>
+
+</html>

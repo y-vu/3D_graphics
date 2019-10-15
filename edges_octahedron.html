@@ -1,0 +1,78 @@
+<html>
+    
+    <head>
+    <title>My first Three.js app</title>
+    <style>canvas { width: 100%; height: 100% }</style>
+    </head>
+
+    <body>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/stats.min.js"></script>
+    <script>
+
+        var scene, camera, renderer, wireframe;
+		function Start() {
+            //CREO SCENA, CAMERA, RENDERER
+            scene = new THREE.Scene(); //"contenitore"
+            scene.background = new THREE.Color( "white" );
+            camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 ); //macchina fotografica prospettica
+            renderer = new THREE.WebGLRenderer(); //oggetto che controlla il rendering
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            document.body.appendChild( renderer.domElement ); //appendo al body un elemento canvas (renderer ci fa rendering dentro)
+
+            //AGGIUNGO OGGETTI ALLA SCENA
+            //ottaedro
+            var geometry = new THREE.Geometry();
+			geometry.vertices.push(
+                new THREE.Vector3(1.5, 1.5, 0),
+                new THREE.Vector3(1.5, 1.5, 2),
+
+                new THREE.Vector3(1, 1, 1),
+                new THREE.Vector3(2, 1, 1),
+                new THREE.Vector3(2, 2, 1),
+                new THREE.Vector3(1, 2, 1)
+            );
+            geometry.faces.push( //si parte da 0!!
+                new THREE.Face3(0, 2, 5),
+                new THREE.Face3(0, 3, 2),
+                new THREE.Face3(0, 4, 3),
+                new THREE.Face3(0, 5, 4),
+
+                new THREE.Face3(5, 2, 1),
+                new THREE.Face3(2, 3, 1),
+                new THREE.Face3(3, 4, 1),
+                new THREE.Face3(5, 1, 4)
+            ); 
+
+            geometry.center(); //per centrare la geometria sull'asse, così può ruotare su se stesso
+            var edges = new THREE.EdgesGeometry( geometry );
+            var material = new THREE.LineBasicMaterial( { color: "black" } );
+            wireframe = new THREE.LineSegments( edges, material );
+            wireframe.rotation.x = Math.PI/2; //ruoto perché ho costruito per sbaglio l'ottaedro ruotato
+
+            scene.add( wireframe );
+            
+
+            camera.position.z = 6; 
+
+            stats = new Stats();
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.top = '0px';
+            document.body.appendChild( stats.domElement );
+        }
+
+        //CREO UN RENDER LOOP
+        function Update() {
+            requestAnimationFrame(Update); //decide la velocità di chiamata del browser (per un nuovo render)
+            stats.update(); 
+            wireframe.rotation.z += 0.01;
+            renderer.render(scene, camera);
+        }
+        
+        Start();
+        Update();
+
+    </script>
+    </body>
+
+</html>
