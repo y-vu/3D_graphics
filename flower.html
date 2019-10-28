@@ -1,0 +1,80 @@
+<html>
+    
+    <head>
+    <title>flower</title>
+    <style>canvas { width: 100%; height: 100% }</style>
+    </head>
+
+    <body>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/stats.min.js"></script>
+    <script>
+
+        var scene, camera, renderer, cube;
+		function Start() {
+            //CREO SCENA, CAMERA, RENDERER
+            scene = new THREE.Scene(); //"contenitore"
+            scene.background = new THREE.Color( "white" );
+            camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 ); //macchina fotografica prospettica
+            renderer = new THREE.WebGLRenderer(); //oggetto che controlla il rendering
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            document.body.appendChild( renderer.domElement ); //appendo al body un elemento canvas (renderer ci fa rendering dentro)
+
+            //AGGIUNGO OGGETTI ALLA SCENA
+            // cylinder
+            var cylinder_geometry = new THREE.CylinderGeometry(0.3, 0.3, 3);
+            var cylinder_material = new THREE.MeshBasicMaterial( { color: "green" } );
+            var cylinder = new THREE.Mesh(cylinder_geometry, cylinder_material);
+
+            //sphere
+            var sphere_geometry = new THREE.SphereGeometry( 0.5, 32, 32 );
+            var sphere_material = new THREE.MeshBasicMaterial( {color: "black"} );
+            var sphere = new THREE.Mesh(sphere_geometry, sphere_material);
+            ////trasformazioni
+            sphere.position.set(0,2,0);
+
+            //petals
+            var petal_geometry = new THREE.CylinderGeometry(0, 0.3, 2);
+            var petal_material = new THREE.MeshBasicMaterial( { color: "red" } );
+
+            for(var i = 0; i < 12; i++){
+                //creo generico oggetto 3D per fare prima la traslazione e poi la rotazione dei petali
+                var pivot = new THREE.Object3D();
+                scene.add(pivot);
+
+                var petal = new THREE.Mesh(petal_geometry, petal_material);
+                pivot.add(petal);
+
+                ////trasformazioni
+                pivot.rotation.y = 30 * i * Math.PI/180;
+                petal.position.set(1,2,0);
+                petal.rotation.z = 90 * Math.PI/180;
+            }
+
+
+            scene.add(sphere);
+            scene.add(cylinder);
+
+
+            camera.position.set(0, 5, 12); 
+
+            stats = new Stats();
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.top = '0px';
+            document.body.appendChild( stats.domElement );
+        }
+
+        //CREO UN RENDER LOOP
+        function Update() {
+            requestAnimationFrame(Update); //decide la velocità di chiamata del browser (per un nuovo render)
+            stats.update(); 
+            renderer.render(scene, camera);
+        }
+        
+        Start();
+        Update();
+
+    </script>
+    </body>
+
+</html>
