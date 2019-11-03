@@ -1,0 +1,145 @@
+<html>
+	<head>
+		<title>Solar system</title>
+		<style>
+
+		body {
+			font-family: Monospace;
+			background-color: #f0f0f0;
+			margin: 0px;
+			overflow: hidden;
+		}
+
+		canvas {
+			width: 100%;
+			height: 100%;
+		}
+
+	</style>
+		<script src="libs/three.js"></script>
+		<script src="libs/stats.min.js"></script>
+		<script src="libs/OrbitControls.js"></script>
+	</head>
+	<body>
+
+		<script>
+
+		var scene, camera, renderer, controls, stats;
+        var earth, earth_pivot1, earth_pivot2, sun, sun_pivot, moon;
+
+		
+		function Start() {
+			scene = new THREE.Scene();
+			camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+
+			renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.setClearColor( "#00004d" );
+			document.body.appendChild( renderer.domElement );
+
+			camera.position.set(12,15,18);
+			camera.lookAt( new THREE.Vector3(14,0,0));
+
+			controls = new THREE.OrbitControls( camera );
+
+
+			//DEFINISCO OGGETTI
+            //SOLE
+            var sun_geometry = new THREE.SphereGeometry( 4, 16, 16 );
+            var sun_material = new THREE.MeshBasicMaterial( {color: "#ffd11a", wireframe: true} );
+            sun = new THREE.Mesh( sun_geometry, sun_material );
+            scene.add( sun );
+
+			//SUN PIVOT
+			sun_pivot = new THREE.Object3D(); //oggetto che diventerà antenato di terra
+			//quindi applicando trasformazioni a sun_pivot, verranno applicate anche a terra
+			scene.add(sun_pivot);
+
+
+            //TERRA
+            var earth_geometry = new THREE.SphereGeometry( 2, 16, 16 );
+            var earth_material = new THREE.MeshBasicMaterial( {color: "#00b33c", wireframe: true} );
+            earth = new THREE.Mesh( earth_geometry, earth_material );
+
+			earth.matrix.makeRotationAxis(new THREE.Vector3(0, 0, 1), 25*Math.PI/180); //ruoto terra di 25 gradi attorno al suo asse locale z
+            earth.matrixAutoUpdate = false;
+
+
+
+			//EARTH PIVOT
+			earth_pivot1 = new THREE.Object3D(); //oggetto che diventerà padre di terra
+			//sarà usato per far ruotare la luna attorno a un asse y verticale
+			earth_pivot2 = new THREE.Object3D(); //oggetto che diventerà padre di luna
+			//quindi applicando trasformazioni a earth_pivot2, verranno applicate anche a luna
+			earth_pivot1.position.x = 14;
+
+			sun_pivot.add(earth_pivot1);
+			earth_pivot1.add(earth);
+			earth.add(earth_pivot2);
+
+
+            //LUNA
+            var moon_geometry = new THREE.SphereGeometry( 0.5, 8, 8 );
+            var moon_material = new THREE.MeshBasicMaterial( {color: "#cce6ff", wireframe: true} );
+            moon = new THREE.Mesh( moon_geometry, moon_material );
+        
+            moon.matrix.makeTranslation(4,0,0);
+            moon.matrixAutoUpdate = false;
+            
+			//aggiungo luna a pivot, così ruotando il pivot ruota anche la luna
+            earth_pivot1.add( moon );
+
+			
+
+			stats = new Stats();
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.top = '0px';
+			document.body.appendChild( stats.domElement );
+
+
+
+		}
+
+		
+		function Update() {
+			//calcolo mllisecondi passati da ultimo rendering (deltaMs)
+			newMsTime = Date.now();
+			deltaMs = newMsTime - lastMsTime;
+			//faccio ruotare sun_pivot e earth_pivot della quantità corrispondente di radianti
+			//millisecondi trascorsi dall'ultimo render * radianti da percorrere ogni millisecondo
+			sun_pivot.rotation.y += deltaMs * radPerMs_earth;
+			earth_pivot1.rotation.y += deltaMs * radPerMs_moon;
+			//aggiorno il valore di lastMsTime
+			lastMsTime = newMsTime;
+
+
+            //per far ruotare luna e terra attorno ai rispettivi assi y locali, moltiplico a ogni esecuzione di Update() le loro matrici per una matrice di rotazione 
+            //cioè a ogni frame ruotano di 0.01 rad attorno ai propri assi y
+            moon.matrix.multiplyMatrices ( moon.matrix, new THREE.Matrix4().makeRotationY(0.01) );
+            earth.matrix.multiplyMatrices ( earth.matrix, new THREE.Matrix4().makeRotationY(0.01) );
+			
+
+			requestAnimationFrame( Update );
+			controls.update();
+			stats.update();
+
+			Render();
+			console.log("end update");
+		}
+
+		function Render() {
+
+			renderer.render(scene, camera);
+		}
+
+		Start();
+
+		var lastMsTime = Date.now(); //ora (in ms) al momento del primo render
+		var radPerMs_earth = (360 * Math.PI/180)/(365 * 1000); //calcolo quanti radianti devono essere percorsi dalla terra al millisecondo
+		var radPerMs_moon = (360 * Math.PI/180)/(365/12 * 1000); //calcolo quanti radianti devono essere percorsi dalla luna al millisecondo
+
+		Update();
+
+		</script>
+	</body>
+</html>
